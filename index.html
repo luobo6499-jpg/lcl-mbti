@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f1ebdd" />
+<meta name="description" content="LCL 群周年庆 · 音乐人格测试，10 道情境题找出你的专属音乐人格。" />
+<title>音乐人格测试 · LCL</title>
+<style>
+  /* 自托管手写体（不依赖 Google Fonts，国内可稳加载） */
+  @font-face{ font-family:"Caveat"; font-style:normal; font-weight:400 700;
+    font-display:swap; src:url("fonts/caveat.woff2") format("woff2"); }
+
+  /* ============ 设计令牌：Claude 手绘暖纸 ============ */
+  :root{
+    --paper:#f1ebdd;        /* 暖米白纸 */
+    --paper-2:#e7dec9;      /* 稍深，卡片/分隔 */
+    --paper-3:#ded2b9;
+    --ink:#3a342c;          /* 暖墨黑文字 */
+    --ink-soft:#766b59;     /* 次级文字 */
+    --brick:#9c3b2e;        /* 砖红主墨色（苹果线条色）*/
+    --clay:#cc785c;         /* Claude 赤陶橙 强调 */
+    --clay-deep:#b5503f;
+    --slate:#8fa3b0;        /* 灰蓝纸屑点缀 */
+    --accent:var(--brick);  /* 结果页按人格色覆盖 */
+    --maxw:460px;
+    --ease:cubic-bezier(.22,.61,.36,1);
+    /* 手绘不规则圆角 */
+    --hand-1:14px 220px 18px 235px / 230px 16px 220px 18px;
+    --hand-2:230px 18px 235px 16px / 16px 225px 18px 220px;
+  }
+
+  html{ -webkit-text-size-adjust:100%; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100svh;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+    overscroll-behavior-y:none;
+    -webkit-tap-highlight-color:rgba(156,59,46,.10);
+    touch-action:manipulation;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* 中文手写感（毛笔楷体，iOS 有；安卓优雅降级到正文） */
+  .kai{ font-family:"STKaiti","Kaiti SC","KaiTi","楷体","PingFang SC",serif; }
+  .hand{ font-family:"Caveat","STKaiti","Kaiti SC",cursive; }
+  .serif-en{ font-family:Georgia,"Times New Roman",serif; }
+
+  /* ============ 背景：头尾大图 / 答题页淡化 ============ */
+  .bg-photo{ position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:url("lcl-cover.png") center / cover no-repeat; transition:opacity .4s var(--ease); }
+  .bg-photo::after{ content:""; position:absolute; inset:0; background:rgba(244,239,228,.15); }
+  /* 答题页：大图淡到几乎只剩米白纸，保证不抢字 */
+  body[data-screen="quiz"] .bg-photo{ opacity:.05; }
+
+  /* ============ 布局骨架 ============ */
+  .app{ position:relative; z-index:1; min-height:100svh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:calc(env(safe-area-inset-top) + 22px) 22px calc(env(safe-area-inset-bottom) + 30px); }
+  .shell{ width:100%; max-width:var(--maxw); margin:auto; }
+
+  .screen{ display:none; animation:rise .45s var(--ease) both; }
+  .screen.active{ display:block; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(12px) rotate(-.4deg); } to{ opacity:1; transform:none; } }
+
+  /* ============ 文字 ============ */
+  .eyebrow{ font-family:"Caveat",cursive; font-size:26px; color:var(--clay);
+    margin:0 0 6px; transform:rotate(-2deg); }
+  .display{ margin:0; font-weight:700; font-size:clamp(34px,9.5vw,46px); line-height:1.18;
+    color:var(--brick); text-wrap:balance;
+    font-family:"STKaiti","Kaiti SC","KaiTi","楷体",serif; letter-spacing:.01em; }
+  .lede{ color:var(--ink-soft); font-size:16px; text-wrap:pretty; margin:16px 0 0; }
+
+  /* 手绘波浪下划线 */
+  .uline{ display:inline-block; padding-bottom:12px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='10' viewBox='0 0 120 10'><path d='M1 6 Q15 1 30 5 T60 5 T90 5 T119 5' fill='none' stroke='%239c3b2e' stroke-width='2.4' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat; background-position:left bottom; background-size:100% 9px; }
+
+  /* ============ 按钮（手绘框） ============ */
+  button{ font-family:inherit; cursor:pointer; touch-action:manipulation; }
+  :where(button,a):focus-visible{ outline:2.5px dashed var(--clay); outline-offset:4px; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:2.5px solid var(--brick); border-radius:var(--hand-1);
+    background:var(--clay); color:#fff7ef; font-size:18px; font-weight:700;
+    padding:15px 34px; box-shadow:3px 4px 0 rgba(156,59,46,.55);
+    transition:transform .14s var(--ease), box-shadow .14s var(--ease), background-color .14s var(--ease); }
+  .btn:hover{ background:var(--clay-deep); transform:translate(-1px,-1px); box-shadow:5px 6px 0 rgba(156,59,46,.55); }
+  .btn:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(156,59,46,.55); }
+  .btn-ghost{ border:2px solid var(--brick); border-radius:var(--hand-2);
+    background:rgba(244,239,228,.9); color:var(--brick); box-shadow:none;
+    font-weight:700; font-size:15px; padding:11px 20px; }
+  .btn-ghost:hover{ background:rgba(156,59,46,.07); transform:none; box-shadow:2px 3px 0 rgba(156,59,46,.3); }
+
+  /* ============ 开始页 ============ */
+  .start{ text-align:center; padding-top:8px; }
+  /* 开始页内容靠上，留出下方让背景里的苹果露出来 */
+  body[data-screen="start"] .shell{ margin-top:5vh; margin-bottom:auto; }
+  .hero-art{ position:relative; margin:0 auto 8px; width:min(264px,68vw); }
+  .hero-art img{ width:100%; height:auto; display:block; }
+  .hero-art img.missing{ display:none; }
+  .art-fallback{ display:none; }
+  .hero-art img.missing ~ .art-fallback{ display:flex; flex-direction:column; gap:6px;
+    align-items:center; justify-content:center; aspect-ratio:3/4; padding:24px;
+    border:2px dashed var(--clay); border-radius:var(--hand-1); color:var(--ink-soft); font-size:13px; }
+  .art-fallback b{ color:var(--brick); font-size:15px; }
+  .badge{ display:inline-block; margin:4px 0 18px; padding:6px 16px;
+    border:2px solid var(--brick); border-radius:var(--hand-2);
+    font-size:13px; color:var(--brick); background:var(--paper);
+    transform:rotate(-1.2deg); }
+  .start .display{ margin-top:4px; }
+  .start .btn{ margin-top:26px; }
+  .meta{ margin-top:16px; font-size:13px; color:var(--ink-soft); }
+
+  /* ============ 答题页 ============ */
+  .qtop{ display:flex; align-items:center; gap:14px; margin-bottom:18px; min-height:34px; }
+  .bar{ flex:1; height:9px; border:2px solid var(--brick); border-radius:99px; background:var(--paper);
+    overflow:hidden; min-width:0; }
+  .bar-fill{ height:100%; width:0; background:var(--clay); transition:width .4s var(--ease);
+    background-image:repeating-linear-gradient(45deg, rgba(156,59,46,.18) 0 6px, transparent 6px 12px); }
+  .progress-num{ font-size:14px; color:var(--ink-soft); white-space:nowrap;
+    font-family:"Caveat",cursive; }
+  .progress-num b{ color:var(--brick); font-size:22px; }
+  .qnav{ margin:0 0 12px; }
+  .btn-back-home{ font-family:"Caveat",cursive; font-size:19px; color:var(--ink-soft);
+    background:transparent; border:0; padding:4px 2px; }
+  .btn-back-home:hover{ color:var(--brick); }
+
+  .qhead{ margin:4px 0 22px; }
+  .qtag{ display:inline-block; font-family:"Caveat",cursive; font-size:21px; color:var(--clay);
+    margin-bottom:6px; transform:rotate(-1.5deg); }
+  .qtitle{ margin:0; font-size:clamp(21px,5.6vw,26px); font-weight:700; line-height:1.4; text-wrap:balance;
+    color:var(--ink); font-family:"STKaiti","Kaiti SC","KaiTi","楷体",sans-serif; }
+
+  .opts{ display:flex; flex-direction:column; gap:13px; }
+  .opt{ display:flex; align-items:flex-start; gap:14px; width:100%; text-align:left;
+    padding:15px 17px; color:var(--ink); background:var(--paper);
+    border:2px solid var(--brick); border-radius:var(--hand-1);
+    box-shadow:2px 3px 0 rgba(156,59,46,.28); font-size:16px; line-height:1.5;
+    transition:transform .14s var(--ease), background-color .14s var(--ease), box-shadow .14s var(--ease); }
+  .opt:nth-child(even){ border-radius:var(--hand-2); }
+  .opt:hover{ background:#fbf6ea; transform:translate(-1px,-1px); box-shadow:4px 5px 0 rgba(156,59,46,.28); }
+  .opt:active{ transform:translate(1px,1px); box-shadow:1px 1px 0 rgba(156,59,46,.28); }
+  .opt.is-selected{ background:rgba(204,120,92,.16); border-color:var(--clay-deep);
+    box-shadow:3px 4px 0 rgba(181,80,63,.5); }
+  .opt .key{ flex:0 0 auto; width:30px; height:30px; margin-top:1px;
+    display:grid; place-items:center; font-size:15px; font-weight:700; font-family:"Caveat",cursive;
+    color:var(--brick); border:2px solid var(--brick); border-radius:60% 40% 55% 45% / 50% 55% 45% 50%; }
+  .opt.is-selected .key{ color:#fff7ef; background:var(--clay-deep); border-color:var(--clay-deep); }
+  .opt .opt-text{ flex:1; min-width:0; word-break:break-word; }
+  .qfoot{ margin-top:22px; display:flex; }
+
+  /* ============ 结果页 ============ */
+  .result{ text-align:center; }
+  .rcard{ position:relative; margin:6px 0 22px; padding:30px 24px 28px;
+    background:var(--paper); border:2.5px solid var(--accent); border-radius:var(--hand-1);
+    box-shadow:4px 5px 0 color-mix(in oklab, var(--accent) 45%, transparent); }
+  .rcard::after{ content:""; position:absolute; inset:7px; border:1.5px solid var(--accent);
+    border-radius:var(--hand-2); opacity:.4; pointer-events:none; }
+  .rtag{ position:absolute; top:12px; right:16px; font-family:"Caveat",cursive; font-size:17px;
+    color:var(--ink-soft); }
+  .rstyle{ margin:10px 0 2px; font-family:"Caveat",cursive; font-size:24px; color:var(--accent); }
+  .rname{ margin:0; font-size:clamp(30px,8.4vw,40px); font-weight:700; line-height:1.15; text-wrap:balance;
+    color:var(--ink); font-family:"STKaiti","Kaiti SC","KaiTi","楷体",serif; }
+  .rdesc{ margin:14px auto 0; max-width:28ch; color:var(--brick); font-size:16px; }
+  .rlong{ margin:14px auto 0; max-width:32ch; color:var(--ink-soft); font-size:14.5px; text-wrap:pretty; }
+  .vscore{ margin:8px 0 0; line-height:1; color:var(--accent); font-family:"Caveat",cursive; }
+  .vscore .num{ font-size:80px; font-weight:700; }
+  .vscore .vunit{ font-size:26px; margin-left:2px; }
+  .result .actions{ display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+  .result .actions .row{ display:flex; gap:12px; }
+  .result .actions .row > *{ flex:1; }
+
+  /* 老群友专属入口（手绘暗门） */
+  .door{ width:100%; margin-top:20px; padding:13px 16px; text-align:left;
+    background:rgba(244,239,228,.86); border:2px dashed var(--clay); border-radius:var(--hand-2);
+    display:flex; flex-direction:column; gap:3px;
+    transition:background-color .16s var(--ease), transform .14s var(--ease); }
+  .door:hover{ background:rgba(204,120,92,.08); transform:translateY(-1px); }
+  .door-k{ font-family:"Caveat",cursive; font-size:19px; color:var(--brick); }
+  .door-t{ font-size:12.5px; color:var(--ink-soft); }
+
+  /* ============ 分享图弹层 ============ */
+  .sheet{ position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center;
+    padding:24px; background:rgba(58,52,44,.55); overscroll-behavior:contain; }
+  .sheet.active{ display:flex; }
+  .sheet-inner{ width:100%; max-width:340px; text-align:center; }
+  .sheet img{ width:100%; height:auto; display:block; border:3px solid var(--paper); box-shadow:0 16px 40px rgba(0,0,0,.35); }
+  .sheet-hint{ margin:14px 0 16px; font-size:14px; color:var(--paper); }
+  .sheet .close{ width:100%; background:transparent; color:var(--paper); border-color:var(--paper); }
+  .sheet .close:hover{ background:rgba(241,235,221,.12); }
+
+  /* ============ 全部人格画廊 ============ */
+  .gallery{ position:fixed; inset:0; z-index:30; display:none; flex-direction:column;
+    background:var(--paper); overscroll-behavior:contain; }
+  .gallery.active{ display:flex; }
+  .gallery-head{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:calc(env(safe-area-inset-top) + 18px) 22px 14px; border-bottom:2px dashed var(--paper-3); }
+  .gallery-head h2{ margin:0; font-size:21px; font-weight:700; color:var(--brick);
+    font-family:"STKaiti","Kaiti SC","KaiTi","楷体",serif; }
+  .gallery-head .sub{ font-family:"Caveat",cursive; font-size:16px; color:var(--ink-soft); margin-top:2px; }
+  .gallery-close{ flex:0 0 auto; width:40px; height:40px; font-size:18px; color:var(--brick);
+    background:var(--paper); border:2px solid var(--brick); border-radius:60% 40% 55% 45% / 50% 55% 45% 50%; }
+  .gallery-list{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:16px 20px calc(env(safe-area-inset-bottom) + 24px); display:flex; flex-direction:column; gap:12px; }
+  .gcard{ display:flex; gap:14px; align-items:center; padding:13px 16px;
+    background:var(--paper); border:2px solid var(--gc); border-radius:var(--hand-1);
+    box-shadow:2px 3px 0 color-mix(in oklab, var(--gc) 40%, transparent); }
+  .gcard:nth-child(even){ border-radius:var(--hand-2); }
+  .gcard .gtxt{ min-width:0; }
+  .gcard .gstyle{ font-family:"Caveat",cursive; font-size:16px; color:var(--gc); }
+  .gcard .gname{ font-weight:700; font-size:17px; margin-top:0; color:var(--ink);
+    font-family:"STKaiti","Kaiti SC","KaiTi","楷体",serif; }
+  .gcard .gdesc{ font-size:13px; color:var(--ink-soft); margin-top:3px; text-wrap:pretty; }
+
+  .footer{ margin-top:26px; text-align:center; font-family:"Caveat",cursive; font-size:16px; color:var(--ink-soft); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-photo" aria-hidden="true"></div>
+
+  <div class="app">
+    <main class="shell">
+
+      <!-- 开始页 -->
+      <section class="screen start active" id="screen-start" aria-labelledby="start-title">
+        <p class="eyebrow">which genre are you?</p>
+        <h1 class="display" id="start-title">你是哪种音乐人格？</h1>
+        <p class="lede">10 道情境小题，听出你藏在生活里的节奏。<br>测完截图，丢进群里对暗号。</p>
+        <button class="btn" type="button" id="btn-start">开始测试</button>
+        <p class="meta">约 1 分钟 · 共 10 题 · 11 种人格等你认领</p>
+      </section>
+
+      <!-- 答题页 -->
+      <section class="screen" id="screen-quiz" aria-labelledby="q-title">
+        <div class="qnav"><button class="btn-back-home" type="button" id="btn-home">← 返回首页</button></div>
+        <div class="qtop">
+          <div class="bar" role="presentation"><div class="bar-fill" id="bar-fill"></div></div>
+          <span class="progress-num" id="progress" aria-live="polite"><b>1</b> / 10</span>
+        </div>
+        <div class="qhead">
+          <span class="qtag" id="q-tag">Q1</span>
+          <h2 class="qtitle" id="q-title"></h2>
+        </div>
+        <div class="opts" id="opts"></div>
+        <div class="qfoot">
+          <button class="btn-ghost" type="button" id="btn-back" hidden>← 上一题</button>
+        </div>
+      </section>
+
+      <!-- 结果页 -->
+      <section class="screen result" id="screen-result" aria-labelledby="r-name">
+        <p class="eyebrow">你的音乐人格是</p>
+        <div class="rcard">
+          <span class="rtag" id="r-style-en"></span>
+          <p class="rstyle" id="r-style"></p>
+          <h2 class="rname uline" id="r-name"></h2>
+          <p class="rdesc" id="r-desc"></p>
+          <p class="rlong" id="r-long"></p>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" id="btn-share">生成分享图</button>
+          <div class="row">
+            <button class="btn-ghost" type="button" id="btn-retry">再测一次</button>
+            <button class="btn-ghost" type="button" id="btn-all">看全部人格</button>
+          </div>
+        </div>
+        <button class="door" type="button" id="btn-veteran">
+          <span class="door-k">老群友专属 →</span>
+          <span class="door-t">群梗认证 · 20 题，测测你是不是真 · LCL 老人</span>
+        </button>
+      </section>
+
+      <!-- 老群友认证结果页 -->
+      <section class="screen result" id="screen-veteran" aria-labelledby="v-name">
+        <p class="eyebrow">LCL 老群友认证</p>
+        <div class="rcard">
+          <span class="rtag">certified</span>
+          <p class="rstyle" id="v-count">答对 0 / 20</p>
+          <div class="vscore"><span class="num" id="v-score">0</span><span class="vunit">分</span></div>
+          <h2 class="rname uline" id="v-name">称号</h2>
+          <p class="rdesc" id="v-desc"></p>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" id="btn-v-share">生成认证卡</button>
+          <div class="row">
+            <button class="btn-ghost" type="button" id="btn-v-retry">再答一次</button>
+            <button class="btn-ghost" type="button" id="btn-v-home">返回首页</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 分享图弹层 -->
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="分享图片">
+    <div class="sheet-inner">
+      <img id="share-img" alt="你的音乐人格分享卡片" width="340" height="453" />
+      <p class="sheet-hint">长按图片保存到相册，或直接截图分享到群</p>
+      <button class="btn-ghost close" type="button" id="btn-sheet-close">关闭</button>
+    </div>
+  </div>
+
+  <!-- 全部人格画廊 -->
+  <div class="gallery" id="gallery" role="dialog" aria-modal="true" aria-labelledby="gallery-title">
+    <div class="gallery-head">
+      <div>
+        <h2 id="gallery-title">11 种音乐人格</h2>
+        <p class="sub">看看你还差几种没集齐</p>
+      </div>
+      <button class="gallery-close" type="button" id="btn-gallery-close" aria-label="关闭">✕</button>
+    </div>
+    <div class="gallery-list" id="gallery-list"></div>
+  </div>
+
+<script>
+/* ====================================================================
+   数据区 —— 改文案只动 TYPES / QUESTIONS / QUESTIONS2 / ANSWER_KEY
+   ==================================================================== */
+
+const TYPES = {
+  jazzhiphop: { style:"Jazz Hip-Hop", name:"深夜耳机派",     color:"#4a5a6b",
+    desc:"总能在安静时听见世界的回声。",
+    long:"白天的喧闹与你无关，真正的频道要到深夜才打开。一副耳机就是你的结界，在 beat 里，你比谁都清醒。" },
+  jazz:       { style:"Jazz",          name:"慢热观察者",     color:"#c8923a",
+    desc:"习惯站在人群边缘观察故事发生。",
+    long:"不抢拍、不赶场，你享受那种「即兴又松弛」的节奏。看似慢半拍，其实把每个人都看得很透。" },
+  bossanova:  { style:"Bossa Nova",    name:"度假脑人格",     color:"#7a9a6b",
+    desc:"生活的意义是舒服与松弛。",
+    long:"再急的事，到你这儿都能先喝口东西再说。你信奉「能躺着绝不坐着」，把日子过成了一场长假。" },
+  rnb:        { style:"R&B",           name:"感情驱动型",     color:"#c4767e",
+    desc:"旋律会过去，情绪会留下。",
+    long:"你做决定靠的是感觉而不是道理。一个眼神、一句话，都能在你心里循环一整天——浓度拉满的人。" },
+  soul:       { style:"Soul",          name:"情绪收藏家",     color:"#8a6a8f",
+    desc:"很多故事没有说出口，却一直保存着。",
+    long:"你把在意的人和事都悄悄存了档。表面云淡风轻，其实记得每一个细节，温柔又深情。" },
+  citypop:    { style:"City Pop",      name:"都市浪漫派",     color:"#b5503f",
+    desc:"霓虹、晚风与自由是你的背景音乐。",
+    long:"你天生带点电影感，夜色里的城市就是你的主场。一个人也能把日子过得很有氛围。" },
+  kpop:       { style:"K-Pop",         name:"能量补给站",     color:"#d2654e",
+    desc:"热闹与行动力是你的天赋。",
+    long:"想到就去做，喊一句就出发。你走到哪儿都自带 BGM 和打光，是朋友圈里那块充电宝。" },
+  cpop:       { style:"华语流行",       name:"全民共鸣体质",   color:"#c2772f",
+    desc:"总能在歌词里找到自己。",
+    long:"你是那种「张口全场就跟着合唱」的人。共情力强、接地气，和谁都能聊到一块去。" },
+  funk:       { style:"Funk",          name:"气氛组核心成员", color:"#94924a",
+    desc:"有你在的地方很少冷场。",
+    long:"你身上有股停不下来的劲儿。续摊、加场、整活，永远是你先开的口——人形气氛发生器。" },
+  jpop:       { style:"J-Pop",         name:"青春漫画主角",   color:"#5f8c8c",
+    desc:"平静外表下藏着热血章节。",
+    long:"看着安静，关键时刻却敢冲。你心里一直住着一个不肯认输的少年，随时准备翻开下一话。" },
+  fusion:     { style:"Fusion",        name:"群友限定稀有品种", color:"#8a7a9a",
+    desc:"没人能预测你的下一步。",
+    long:"你是混搭出来的限定款，规则在你这儿不太好使。今天文艺、明天发癫，全凭心情刷新——独一份。" }
+};
+
+const QUESTIONS = [
+  { id:"Q1", tag:"过河", text:"前面有条河挡住了去路，你会怎么过去？", options:[
+    { text:"找块石头坐下，先看看别人怎么过", primary:"jazz",      secondary:"soul" },
+    { text:"反正不急，沿着河边晃晃，说不定有桥", primary:"bossanova", secondary:"citypop" },
+    { text:"深吸一口气，助跑直接跳过去", primary:"jpop",      secondary:"jazzhiphop" },
+    { text:"就地喊一嗓子，看能不能组个队一起想办法", primary:"funk",      secondary:"fusion" },
+  ]},
+  { id:"Q2", tag:"凌晨两点", text:"凌晨两点还醒着，你大概在干嘛？", options:[
+    { text:"戴上耳机，把一首歌单曲循环到天亮", primary:"jazzhiphop", secondary:"soul" },
+    { text:"翻以前的聊天记录和照片，越翻越清醒", primary:"soul",       secondary:"rnb" },
+    { text:"站在窗边看夜景，城市的灯还亮着", primary:"citypop",    secondary:"jpop" },
+    { text:"突然来劲，爬起来收拾房间或做点什么", primary:"kpop",       secondary:"fusion" },
+  ]},
+  { id:"Q3", tag:"超能力", text:"如果能拥有一种超能力，你选哪个？", options:[
+    { text:"读懂任何人此刻真正的情绪", primary:"rnb",     secondary:"soul" },
+    { text:"每天醒来技能随机刷新，永远不重样", primary:"fusion",  secondary:"citypop" },
+    { text:"走到哪里，气氛就嗨到哪里", primary:"kpop",    secondary:"funk" },
+    { text:"听一遍就会唱任何歌，张口就是全场合唱", primary:"cpop",    secondary:"jpop" },
+  ]},
+  { id:"Q4", tag:"临时邀约", text:"晚上九点，朋友突然喊你出门，你？", options:[
+    { text:"太晚了，被窝更香，下次一定", primary:"bossanova", secondary:"rnb" },
+    { text:"秒回「在哪集合」，已经在穿鞋了", primary:"kpop",      secondary:"funk" },
+    { text:"犹豫三秒——还是去吧，万一有故事呢", primary:"jpop",      secondary:"citypop" },
+    { text:"看心情，可能去，也可能半路拐去别的地方", primary:"fusion",    secondary:"jazzhiphop" },
+  ]},
+  { id:"Q5", tag:"开店", text:"如果开一家小店，你最想开？", options:[
+    { text:"海边的冲浪冰沙店，营业全看心情", primary:"bossanova", secondary:"citypop" },
+    { text:"深夜还亮着灯的城市唱片店", primary:"citypop",   secondary:"jpop" },
+    { text:"谁来都能聊两句的社区小馆", primary:"cpop",      secondary:"rnb" },
+    { text:"周末有现场演出的热闹小酒馆", primary:"funk",      secondary:"kpop" },
+  ]},
+  { id:"Q6", tag:"情绪过载", text:"如果今天情绪有点满，你会怎么给自己留空间？", options:[
+    { text:"一句「我没事」，然后默默自己消化", primary:"soul",       secondary:"rnb" },
+    { text:"找一个人，把情绪一股脑全倒出来", primary:"rnb",        secondary:"jpop" },
+    { text:"一副耳机，世界瞬间静音", primary:"jazzhiphop", secondary:"citypop" },
+    { text:"出门走走，让风把脑子重新吹亮", primary:"citypop",    secondary:"funk" },
+  ]},
+  { id:"Q7", tag:"下雨天", text:"突然下起大雨，你被困在屋檐下，你？", options:[
+    { text:"不急，看着雨发会儿呆，挺好", primary:"jazz",  secondary:"jazzhiphop" },
+    { text:"雨声让你想起了一些很久以前的事", primary:"soul",  secondary:"citypop" },
+    { text:"给某个人发消息：「下雨了，你那边呢」", primary:"rnb",   secondary:"cpop" },
+    { text:"干脆冲进雨里，反正都要湿了", primary:"jpop",  secondary:"kpop" },
+  ]},
+  { id:"Q8", tag:"陌生城市", text:"一个人到了陌生城市，落地后第一件事？", options:[
+    { text:"漫无目的地走，看霓虹和街景", primary:"citypop",    secondary:"jpop" },
+    { text:"找家咖啡馆坐下，戴耳机看人来人往", primary:"jazzhiphop", secondary:"soul" },
+    { text:"先搜「本地人推荐」，奔着热门去", primary:"cpop",       secondary:"rnb" },
+    { text:"立刻约当地朋友，或扎进最热闹的地方", primary:"kpop",      secondary:"funk" },
+  ]},
+  { id:"Q9", tag:"最想停留", text:"下面这些瞬间，你最想停留在哪一个？", options:[
+    { text:"午后空房间，阳光慢慢移动", primary:"jazz",       secondary:"bossanova" },
+    { text:"深夜末班车，窗外灯火一格格流过", primary:"jazzhiphop", secondary:"soul" },
+    { text:"老照片里某个再也回不去的下午", primary:"soul",       secondary:"rnb" },
+    { text:"还没发生、充满未知的明天", primary:"fusion",     secondary:"citypop" },
+  ]},
+  { id:"Q10", tag:"活动结束", text:"一场热闹的聚会结束了，你？", options:[
+    { text:"意犹未尽，已经在期待下一次", primary:"jpop", secondary:"kpop" },
+    { text:"回家路上反复回味某句话、某个眼神", primary:"rnb",  secondary:"soul" },
+    { text:"在群里发「今天太开心了」配一堆图", primary:"cpop", secondary:"citypop" },
+    { text:"「续摊吗？」——这话往往是你先说出口的", primary:"funk", secondary:"fusion" },
+  ]},
+];
+
+const GROUP_TAG = "群周年庆 · 音乐人格测试";
+
+/* ---------- 老群友专属版（群梗认证） ---------- */
+const QUESTIONS2 = [
+  { tag:"深夜电话",     text:"群里固定打电话的时间段是？", options:["上午","中午","晚上"] },
+  { tag:"贝壳病",       text:"贝壳病最典型的特点是？", options:["熬夜打电话","记不住群友性别","不爱开语音"] },
+  { tag:"阶",           text:"「______，分享便成了炫耀」横线处填？", options:["身份不同","家境不同","阶级不同"] },
+  { tag:"教教主",       text:"lio 最喜欢的玩具是？", options:["逗猫棒","猫薄荷","群主打包的绳子"] },
+  { tag:"一键卖鱼",     text:"大家钓完鱼之后发「一键卖鱼」的原因是？", options:["鱼放久了会贬值","避免别人偷鱼","不卖鱼没法继续钓"] },
+  { tag:"少年博学者",   text:"提起猫猫，大家对他最深的印象是？", options:["年纪小但博学","年纪小爱发 lio 照片","年纪大但单纯"] },
+  { tag:"东部点心",     text:"群主做的点心被群友取名为？", options:["东东甜品","东部点心","东东烘焙"] },
+  { tag:"meme 分享者",  text:"爱大量发送 memes 梗图的群友是？", options:["hco3","shino","85"] },
+  { tag:"冻仙子",       text:"被称为「仙草蜜 / 冻仙子」的群友是？", options:["猫猫、85","平头八、猫猫","平头八、85"] },
+  { tag:"超级 J 人",    text:"执行力超强、做事超严谨、超级 J 的群友是？", options:["红茶","酸","大米"] },
+  { tag:"刷屏表情",     text:"乒乓在谁那里刷屏「挠鸡鸡好舒服」的表情包？", options:["暗恋之人","客户","老妈"] },
+  { tag:"加不上好友",   text:"本群谁的微信最难得到？", options:["noodle","东东","乒乓"] },
+  { tag:"恋爱脑",       text:"大部分群友的恋爱状态是？", options:["恋爱脑","养鱼大户","理智之人"] },
+  { tag:"最萌之人",     text:"下面哪一组人物拥有超萌可爱音？", options:["青椒、莲子","白、kana","彗星、芒狗"] },
+  { tag:"绝美 noodle",  text:"以下哪一段文字是对 noodle 的概括？", options:["发图刷屏，记得撤回","绝美外表，纯净心灵","绝美外表，绝美心灵"] },
+  { tag:"速通之人",     text:"进群短短数月就和全员熟络、被称为「速通之人」的是？", options:["念","不不","莫比"] },
+  { tag:"羊一川代言人", text:"为什么凯文是羊一川代言人？", options:["凯文开的店","凯文爱吃","凯文是网红"] },
+  { tag:"最佳闺蜜",     text:"b 老师打电话的标志性口头禅是？", options:["闺蜜","宝宝","我想你了"] },
+  { tag:"全员追捧",     text:"什么食物曾经引发了全员追捧？", options:["针王苹果","鸡柳大人","以上都有"] },
+  { tag:"旅行青蛙",     text:"大家看到 gaga 还有小温发日常照片会感慨啥？", options:["快回来","旅行青蛙","羡慕有钱人"] },
+];
+
+/* 20 题正确答案（按题号顺序，每题一个字母 A/B/C）。要改答案就改这一行。 */
+const ANSWER_KEY = "CBCCBABCBBBAACCCBACB";
+const ANSWER_IDX = ANSWER_KEY.split("").map(c => ({A:0,B:1,C:2}[c.toUpperCase()] ?? -1));
+
+/* 按分数给称号（满分100 / 优秀≥80 / 合格≥60 / 潜水<60），颜色用暖土色 */
+const TITLES2 = [
+  { min:100, name:"满分群友", color:"#b5503f", desc:"群龄拉满，梗比群主还熟——实锤元老级人物。" },
+  { min:80,  name:"优秀群友", color:"#7a9a6b", desc:"在群里泡得够久，大部分梗都门儿清。" },
+  { min:60,  name:"合格群友", color:"#c8923a", desc:"勉强算自己人，还有几个梗没跟上。" },
+  { min:0,   name:"潜水群友", color:"#8fa3b0", desc:"潜水太久，是时候冒个泡、补补课了。" },
+];
+
+/* ====================================================================
+   逻辑区（与皮肤无关，保持不变）
+   ==================================================================== */
+const state = { mode:"music", index:0, answers:new Array(QUESTIONS.length).fill(-1) };
+
+const $ = (id) => document.getElementById(id);
+const screens = {
+  start:   $("screen-start"),
+  quiz:    $("screen-quiz"),
+  result:  $("screen-result"),
+  veteran: $("screen-veteran"),
+};
+const activeQuestions = () => state.mode === "veteran" ? QUESTIONS2 : QUESTIONS;
+
+function showScreen(key){
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[key].classList.add("active");
+  document.body.dataset.screen = key;
+  window.scrollTo({ top:0, behavior:"auto" });
+}
+
+function renderQuestion(){
+  const qs = activeQuestions();
+  const q = qs[state.index];
+  const n = state.index + 1;
+  const veteran = state.mode === "veteran";
+  $("q-tag").textContent = veteran ? `群梗认证 · ${q.tag}` : `Q${n} · ${q.tag}`;
+  $("q-title").textContent = q.text;
+  $("progress").innerHTML = `<b>${n}</b> / ${qs.length}`;
+  $("bar-fill").style.width = `${(n / qs.length) * 100}%`;
+  $("btn-back").hidden = state.index === 0;
+
+  const wrap = $("opts");
+  wrap.innerHTML = "";
+  const keys = ["A","B","C","D"];
+  q.options.forEach((opt, i) => {
+    const text = veteran ? opt : opt.text;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "opt" + (state.answers[state.index] === i ? " is-selected" : "");
+    btn.innerHTML = `<span class="key" aria-hidden="true">${keys[i]}</span><span class="opt-text">${text}</span>`;
+    btn.addEventListener("click", () => choose(i));
+    wrap.appendChild(btn);
+  });
+}
+
+function choose(optIndex){
+  state.answers[state.index] = optIndex;
+  const buttons = $("opts").querySelectorAll(".opt");
+  buttons.forEach((b, i) => b.classList.toggle("is-selected", i === optIndex));
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(advance, reduce ? 0 : 260);
+}
+
+function advance(){
+  if (state.index < activeQuestions().length - 1){ state.index++; renderQuestion(); }
+  else { finish(); }
+}
+
+function computeResult(){
+  const totals = {};
+  Object.keys(TYPES).forEach(k => totals[k] = 0);
+  state.answers.forEach((optIndex, qi) => {
+    if (optIndex < 0) return;
+    const opt = QUESTIONS[qi].options[optIndex];
+    totals[opt.primary] += 2;
+    totals[opt.secondary] += 1;
+  });
+  const max = Math.max(...Object.values(totals));
+  const tied = Object.keys(totals).filter(k => totals[k] === max);
+  if (tied.length === 1) return tied[0];
+  const running = {};
+  Object.keys(TYPES).forEach(k => running[k] = 0);
+  for (let qi = 0; qi < state.answers.length; qi++){
+    const opt = QUESTIONS[qi].options[state.answers[qi]];
+    running[opt.primary] += 2;
+    running[opt.secondary] += 1;
+    for (const k of tied){ if (running[k] >= max) return k; }
+  }
+  return tied[0];
+}
+
+let currentTypeKey = null;
+let currentVeteran = null;
+
+function finish(){
+  if (state.mode === "veteran"){ showVeteranResult(); return; }
+  showResult();
+}
+
+function showResult(){
+  currentTypeKey = computeResult();
+  const t = TYPES[currentTypeKey];
+  document.documentElement.style.setProperty("--accent", t.color);
+  $("r-style-en").textContent = t.style;
+  $("r-style").textContent = t.style + " 型";
+  $("r-name").textContent = t.name;
+  $("r-desc").textContent = "「" + t.desc + "」";
+  $("r-long").textContent = t.long;
+  showScreen("result");
+}
+
+function showVeteranResult(){
+  const total = QUESTIONS2.length;
+  let correct = 0;
+  state.answers.forEach((a, i) => { if (a >= 0 && a === ANSWER_IDX[i]) correct++; });
+  const score = Math.round(correct / total * 100);
+  const title = TITLES2.find(t => score >= t.min) || TITLES2[TITLES2.length - 1];
+  document.documentElement.style.setProperty("--accent", title.color);
+  $("v-count").textContent = `答对 ${correct} / ${total}`;
+  $("v-score").textContent = score;
+  $("v-name").textContent = title.name;
+  $("v-desc").textContent = title.desc;
+  currentVeteran = { correct, total, score, title };
+  showScreen("veteran");
+}
+
+function startVeteran(){
+  state.mode = "veteran";
+  state.index = 0;
+  state.answers = new Array(QUESTIONS2.length).fill(-1);
+  document.documentElement.style.setProperty("--accent", "var(--brick)");
+  renderQuestion();
+  showScreen("quiz");
+}
+
+function reset(){
+  state.mode = "music";
+  state.index = 0;
+  state.answers = new Array(QUESTIONS.length).fill(-1);
+  document.documentElement.style.setProperty("--accent", "var(--brick)");
+  showScreen("start");
+}
+
+/* ---------- 分享图（原生 Canvas · 手绘暖纸） ---------- */
+function jitter(n){ return (Math.random()-0.5)*n; }
+function sketchLine(ctx, x1,y1,x2,y2, color, w){
+  ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath();
+  const steps = 14;
+  for (let i=0;i<=steps;i++){
+    const t=i/steps, x=x1+(x2-x1)*t+jitter(3.2), y=y1+(y2-y1)*t+jitter(3.2);
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+}
+function sketchRect(ctx, x,y,w,h, color, lw, alpha){
+  ctx.save(); ctx.globalAlpha = alpha==null?1:alpha;
+  sketchLine(ctx, x,y, x+w,y, color, lw);
+  sketchLine(ctx, x+w,y, x+w,y+h, color, lw);
+  sketchLine(ctx, x+w,y+h, x,y+h, color, lw);
+  sketchLine(ctx, x,y+h, x,y, color, lw);
+  ctx.restore();
+}
+function drawCard({ accent, eyebrow, big, sub, quote, footer }){
+  const W=1080, H=1440;
+  const c=document.createElement("canvas"); c.width=W; c.height=H;
+  const ctx=c.getContext("2d");
+  // 纸底
+  ctx.fillStyle="#f1ebdd"; ctx.fillRect(0,0,W,H);
+  // 灰蓝纸屑
+  ctx.fillStyle="rgba(143,163,176,.30)";
+  for(let i=0;i<150;i++){ const x=Math.random()*W,y=Math.random()*H,r=Math.random()*2.2+.3;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); }
+  // 手绘双线边框
+  sketchRect(ctx, 64,64, W-128, H-128, accent, 6);
+  sketchRect(ctx, 80,80, W-160, H-160, accent, 3, .45);
+  ctx.textAlign="center";
+  // eyebrow（手写）
+  ctx.fillStyle="#766b59"; ctx.font="italic 600 40px Georgia, serif";
+  ctx.fillText(eyebrow, W/2, 330);
+  // sub
+  ctx.fillStyle=accent; ctx.font="italic 700 50px Georgia, serif";
+  ctx.fillText(sub, W/2, 500);
+  // big（楷体毛笔）
+  ctx.fillStyle="#3a342c"; ctx.font='700 120px "STKaiti","Kaiti SC","KaiTi",serif';
+  ctx.fillText(big, W/2, 670);
+  sketchLine(ctx, W/2-230, 712, W/2+230, 712, accent, 6);
+  // quote
+  ctx.fillStyle="#5a5145"; ctx.font='400 46px "STKaiti","Kaiti SC",serif';
+  wrapText(ctx, quote, W/2, 830, W-320, 66);
+  // footer
+  ctx.fillStyle="#9a8f7c"; ctx.font="600 34px Georgia, serif";
+  ctx.fillText(footer, W/2, H-150);
+  return c.toDataURL("image/png");
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const chars = text.split("");
+  let line = "", lines = [];
+  for (const ch of chars){
+    if (ctx.measureText(line + ch).width > maxWidth && line){ lines.push(line); line = ch; }
+    else line += ch;
+  }
+  if (line) lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i*lineHeight));
+}
+
+function openSheet(dataUrl){ $("share-img").src = dataUrl; $("sheet").classList.add("active"); }
+function closeSheet(){ $("sheet").classList.remove("active"); }
+
+function shareResult(){
+  const t = TYPES[currentTypeKey];
+  openSheet(drawCard({ accent:t.color, eyebrow:"my music persona", sub:t.style+" 型", big:t.name, quote:t.desc, footer:GROUP_TAG }));
+}
+function shareVeteran(){
+  const v = currentVeteran;
+  openSheet(drawCard({ accent:v.title.color, eyebrow:"LCL 老群友认证", sub:`答对 ${v.correct}/${v.total} · ${v.score} 分`, big:v.title.name, quote:v.title.desc, footer:GROUP_TAG }));
+}
+
+function openGallery(){
+  $("gallery-list").innerHTML = Object.values(TYPES).map(t => `
+    <div class="gcard" style="--gc:${t.color}">
+      <div class="gtxt">
+        <div class="gstyle">${t.style}</div>
+        <div class="gname">${t.name}</div>
+        <div class="gdesc">${t.desc}</div>
+      </div>
+    </div>`).join("");
+  $("gallery").classList.add("active");
+}
+function closeGallery(){ $("gallery").classList.remove("active"); }
+
+/* ---------- 事件绑定 ---------- */
+$("btn-start").addEventListener("click", () => {
+  state.mode = "music"; state.index = 0;
+  state.answers = new Array(QUESTIONS.length).fill(-1);
+  renderQuestion(); showScreen("quiz");
+});
+$("btn-back").addEventListener("click", () => { if (state.index > 0){ state.index--; renderQuestion(); } });
+$("btn-home").addEventListener("click", reset);
+$("btn-retry").addEventListener("click", reset);
+$("btn-veteran").addEventListener("click", startVeteran);
+$("btn-v-share").addEventListener("click", shareVeteran);
+$("btn-v-retry").addEventListener("click", startVeteran);
+$("btn-v-home").addEventListener("click", reset);
+$("btn-all").addEventListener("click", openGallery);
+$("btn-gallery-close").addEventListener("click", closeGallery);
+$("btn-share").addEventListener("click", shareResult);
+$("btn-sheet-close").addEventListener("click", closeSheet);
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape"){ closeSheet(); closeGallery(); } });
+
+/* 开始页暗号：连点苹果手绘图 3 下进老群友版 */
+let tapCount = 0, tapTimer = null;
+document.getElementById("start-title").addEventListener("click", () => {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { tapCount = 0; }, 900);
+  if (tapCount >= 3){ tapCount = 0; startVeteran(); }
+});
+
+document.body.dataset.screen = "start";
+</script>
+</body>
+</html>
