@@ -52,7 +52,7 @@
 
   /* ============ 背景：头尾大图 / 答题页淡化 ============ */
   .bg-photo{ position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:url("lcl-cover.png") center / cover no-repeat; transition:opacity .4s var(--ease); }
+    background:url("lcl-cover-lite.jpg") center / cover no-repeat; transition:opacity .4s var(--ease); }
   .bg-photo::after{ content:""; position:absolute; inset:0; background:rgba(244,239,228,.15); }
   /* 答题页：大图淡到几乎只剩米白纸，保证不抢字 */
   body[data-screen="quiz"] .bg-photo{ opacity:.05; }
@@ -580,15 +580,18 @@ const audioState = {
   current: "main",
   muted: false,
   unlocked: false,
+  initialTimer: null,
+  initialScheduled: false,
   tracks: {
-    main: new Audio("audio/main.mp3"),
-    veteran: new Audio("audio/veteran.mp3"),
+    main: new Audio("audio/main-lite.mp3"),
+    veteran: new Audio("audio/veteran-lite.mp3"),
   },
 };
 Object.values(audioState.tracks).forEach(audio => {
   audio.loop = true;
   audio.preload = "auto";
   audio.volume = 0.55;
+  audio.load();
 });
 
 function activeAudio(){ return audioState.tracks[audioState.current]; }
@@ -631,6 +634,15 @@ function toggleMusic(){
 function unlockAudioOnce(){
   if (audioState.unlocked || audioState.muted) return;
   playCurrentAudio();
+}
+function scheduleInitialMainAudio(){
+  if (audioState.initialScheduled) return;
+  audioState.initialScheduled = true;
+  audioState.initialTimer = setTimeout(() => {
+    audioState.initialTimer = null;
+    if (audioState.current !== "main") return;
+    playCurrentAudio();
+  }, 1300);
 }
 
 function finish(){
@@ -800,7 +812,7 @@ $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) close
 document.addEventListener("keydown", (e) => { if (e.key === "Escape"){ closeSheet(); closeGallery(); } });
 document.addEventListener("pointerdown", unlockAudioOnce, { once:true });
 document.addEventListener("touchstart", unlockAudioOnce, { once:true });
-window.addEventListener("load", playCurrentAudio);
+window.addEventListener("load", scheduleInitialMainAudio);
 
 /* 开始页暗号：连点苹果手绘图 3 下进老群友版 */
 let tapCount = 0, tapTimer = null;
@@ -813,7 +825,7 @@ document.getElementById("start-title").addEventListener("click", () => {
 
 document.body.dataset.screen = "start";
 syncMusicButton();
-playCurrentAudio();
+scheduleInitialMainAudio();
 </script>
 </body>
 </html>
