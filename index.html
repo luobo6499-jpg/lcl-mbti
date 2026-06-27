@@ -68,7 +68,7 @@
   @keyframes rise{ from{ opacity:0; transform:translateY(12px) rotate(-.4deg); } to{ opacity:1; transform:none; } }
 
   /* ============ 文字 ============ */
-  .eyebrow{ font-family:"Caveat",cursive; font-size:26px; color:var(--clay);
+  .eyebrow{ font-family:"Caveat",cursive; font-size:30px; color:var(--clay);
     margin:0 0 6px; transform:rotate(-2deg); }
   .display{ margin:0; font-weight:700; font-size:clamp(34px,9.5vw,46px); line-height:1.18;
     color:var(--brick); text-wrap:balance;
@@ -96,9 +96,9 @@
   .btn-ghost:hover{ background:rgba(156,59,46,.07); transform:none; box-shadow:2px 3px 0 rgba(156,59,46,.3); }
 
   /* ============ 开始页 ============ */
-  .start{ text-align:center; padding-top:8px; }
-  /* 开始页内容靠上，留出下方让背景里的苹果露出来 */
-  body[data-screen="start"] .shell{ margin-top:5vh; margin-bottom:auto; }
+  .start{ position:relative; text-align:center; min-height:calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 52px);
+    padding-top:clamp(70px,9svh,94px); }
+  body[data-screen="start"] .shell{ margin-top:0; margin-bottom:0; }
   .hero-art{ position:relative; margin:0 auto 8px; width:min(264px,68vw); }
   .hero-art img{ width:100%; height:auto; display:block; }
   .hero-art img.missing{ display:none; }
@@ -112,8 +112,12 @@
     font-size:13px; color:var(--brick); background:var(--paper);
     transform:rotate(-1.2deg); }
   .start .display{ margin-top:4px; }
-  .start .btn{ margin-top:26px; }
-  .meta{ margin-top:16px; font-size:13px; color:var(--ink-soft); }
+  .start .lede{ width:100vw; max-width:100vw; margin-left:calc(50% - 50vw); margin-right:0;
+    white-space:nowrap; font-size:16px; line-height:1.6; text-align:center; }
+  .start-actions{ position:absolute; right:clamp(18px,6vw,42px); top:clamp(338px,41.5svh,374px); width:clamp(146px,38vw,174px); }
+  .start .btn{ margin-top:0; }
+  .meta{ position:absolute; left:0; right:0; bottom:clamp(46px,6.4svh,66px);
+    margin:0; font-size:13px; color:var(--ink-soft); }
 
   /* ============ 答题页 ============ */
   .qtop{ display:flex; align-items:center; gap:14px; margin-bottom:18px; min-height:34px; }
@@ -218,6 +222,22 @@
 
   .footer{ margin-top:26px; text-align:center; font-family:"Caveat",cursive; font-size:16px; color:var(--ink-soft); }
 
+  /* ============ 音乐开关 ============ */
+  .music-toggle{ position:fixed; right:18px; bottom:calc(env(safe-area-inset-bottom) + 18px); z-index:40;
+    width:48px; height:48px; padding:0; display:grid; place-items:center;
+    border:2px solid var(--brick); border-radius:50%;
+    background:rgba(244,239,228,.92); color:var(--brick);
+    box-shadow:3px 4px 0 rgba(156,59,46,.32);
+    transition:transform .14s var(--ease), box-shadow .14s var(--ease), opacity .14s var(--ease); }
+  .music-toggle:hover{ transform:translate(-1px,-1px); box-shadow:5px 6px 0 rgba(156,59,46,.28); }
+  .music-toggle:active{ transform:translate(1px,1px); box-shadow:1px 1px 0 rgba(156,59,46,.28); }
+  .music-toggle svg{ width:24px; height:24px; transform-origin:50% 50%; }
+  .music-toggle.is-playing svg{ animation:spin-note 2.8s linear infinite; }
+  .music-toggle.is-muted{ opacity:.62; }
+  .music-toggle.is-muted::after{ content:""; position:absolute; width:30px; height:2px; border-radius:2px;
+    background:var(--brick); transform:rotate(-38deg); }
+  @keyframes spin-note{ to{ transform:rotate(360deg); } }
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
   }
@@ -232,9 +252,11 @@
       <!-- 开始页 -->
       <section class="screen start active" id="screen-start" aria-labelledby="start-title">
         <p class="eyebrow">which genre are you?</p>
-        <h1 class="display" id="start-title">你是哪种音乐人格？</h1>
+        <h1 class="display" id="start-title">你是哪种<br>音乐人格？</h1>
         <p class="lede">10 道情境小题，听出你藏在生活里的节奏。<br>测完截图，丢进群里对暗号。</p>
-        <button class="btn" type="button" id="btn-start">开始测试</button>
+        <div class="start-actions">
+          <button class="btn" type="button" id="btn-start">开始测试</button>
+        </div>
         <p class="meta">约 1 分钟 · 共 10 题 · 11 种人格等你认领</p>
       </section>
 
@@ -320,6 +342,12 @@
     </div>
     <div class="gallery-list" id="gallery-list"></div>
   </div>
+
+  <button class="music-toggle" type="button" id="music-toggle" aria-label="开关背景音乐" aria-pressed="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 17.2a3.1 3.1 0 1 1-1.7-2.75V6.2c0-.62.42-1.16 1.02-1.31l8.2-2.05c.86-.22 1.69.43 1.69 1.31v10.05a3.1 3.1 0 1 1-1.7-2.75V6.22l-7.5 1.88v9.1Z" fill="currentColor"/>
+    </svg>
+  </button>
 
 <script>
 /* ====================================================================
@@ -548,6 +576,63 @@ function computeResult(){
 let currentTypeKey = null;
 let currentVeteran = null;
 
+const audioState = {
+  current: "main",
+  muted: false,
+  unlocked: false,
+  tracks: {
+    main: new Audio("audio/main.mp3"),
+    veteran: new Audio("audio/veteran.mp3"),
+  },
+};
+Object.values(audioState.tracks).forEach(audio => {
+  audio.loop = true;
+  audio.preload = "auto";
+  audio.volume = 0.55;
+});
+
+function activeAudio(){ return audioState.tracks[audioState.current]; }
+function syncMusicButton(){
+  const btn = $("music-toggle");
+  const audio = activeAudio();
+  btn.classList.toggle("is-muted", audioState.muted);
+  btn.classList.toggle("is-playing", !audioState.muted && !audio.paused);
+  btn.setAttribute("aria-pressed", String(!audioState.muted));
+}
+async function playCurrentAudio(){
+  if (audioState.muted) { syncMusicButton(); return; }
+  try {
+    await activeAudio().play();
+    audioState.unlocked = true;
+  } catch {
+    audioState.unlocked = false;
+  }
+  syncMusicButton();
+}
+function pauseAllAudio(){
+  Object.values(audioState.tracks).forEach(audio => audio.pause());
+}
+function switchAudio(key){
+  if (!audioState.tracks[key] || audioState.current === key) {
+    playCurrentAudio();
+    return;
+  }
+  pauseAllAudio();
+  audioState.current = key;
+  activeAudio().currentTime = 0;
+  playCurrentAudio();
+}
+function toggleMusic(){
+  audioState.muted = !audioState.muted;
+  if (audioState.muted) pauseAllAudio();
+  else playCurrentAudio();
+  syncMusicButton();
+}
+function unlockAudioOnce(){
+  if (audioState.unlocked || audioState.muted) return;
+  playCurrentAudio();
+}
+
 function finish(){
   if (state.mode === "veteran"){ showVeteranResult(); return; }
   showResult();
@@ -581,6 +666,7 @@ function showVeteranResult(){
 }
 
 function startVeteran(){
+  switchAudio("veteran");
   state.mode = "veteran";
   state.index = 0;
   state.answers = new Array(QUESTIONS2.length).fill(-1);
@@ -590,6 +676,7 @@ function startVeteran(){
 }
 
 function reset(){
+  switchAudio("main");
   state.mode = "music";
   state.index = 0;
   state.answers = new Array(QUESTIONS.length).fill(-1);
@@ -687,6 +774,7 @@ function closeGallery(){ $("gallery").classList.remove("active"); }
 
 /* ---------- 事件绑定 ---------- */
 $("btn-start").addEventListener("click", () => {
+  switchAudio("main");
   state.mode = "music"; state.index = 0;
   state.answers = new Array(QUESTIONS.length).fill(-1);
   renderQuestion(); showScreen("quiz");
@@ -702,8 +790,17 @@ $("btn-all").addEventListener("click", openGallery);
 $("btn-gallery-close").addEventListener("click", closeGallery);
 $("btn-share").addEventListener("click", shareResult);
 $("btn-sheet-close").addEventListener("click", closeSheet);
+$("music-toggle").addEventListener("pointerdown", (e) => e.stopPropagation());
+$("music-toggle").addEventListener("touchstart", (e) => e.stopPropagation());
+$("music-toggle").addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleMusic();
+});
 $("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape"){ closeSheet(); closeGallery(); } });
+document.addEventListener("pointerdown", unlockAudioOnce, { once:true });
+document.addEventListener("touchstart", unlockAudioOnce, { once:true });
+window.addEventListener("load", playCurrentAudio);
 
 /* 开始页暗号：连点苹果手绘图 3 下进老群友版 */
 let tapCount = 0, tapTimer = null;
@@ -715,6 +812,8 @@ document.getElementById("start-title").addEventListener("click", () => {
 });
 
 document.body.dataset.screen = "start";
+syncMusicButton();
+playCurrentAudio();
 </script>
 </body>
 </html>
